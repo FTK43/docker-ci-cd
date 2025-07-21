@@ -26,6 +26,12 @@ app.get('/', async(req, res) => {
   res.send(now);
 });
 
+app.get('/test-ci-cd', (req, res) => {
+  const now = Date.now();
+
+  res.send(`CI/CD TEST: TIMESTAMP ${now}`);
+})
+
 app.get('/log', (req, res) => {
   const timestamp = new Date().toISOString();
   const message = `${timestamp} new log\n`;
