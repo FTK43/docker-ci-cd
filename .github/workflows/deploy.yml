@@ -1,0 +1,35 @@
+name: Deploy to Amazon EC2 (Amazon Linux)
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v3
+
+      - name: Log in to docker hub
+        run:  echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/node-app:latest .
+      
+      - name: Push to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/node-app:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/node-app:latest
+            sudo docker stop node-app || true
+            sudo docker rm node-app || true
+            sudo docker run -d -p 3000:3000 --name node-app ${{ secrets.DOCKER_USERNAME }}/node-app:latest
